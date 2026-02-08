@@ -1,6 +1,10 @@
 package testcase;
 
+import java.time.Duration;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -10,32 +14,42 @@ import base.BaseTest;
 public class Login extends BaseTest {
 
 	@Test(dataProvider = "testdata")
-	public void Logintest(String name, String pass) throws InterruptedException {
-		Thread.sleep(4000);
-		driver.findElement(By.name(loc.getProperty("Username"))).clear();
-		driver.findElement(By.name(loc.getProperty("Username"))).sendKeys(name);
-		Thread.sleep(4000);
-		driver.findElement(By.name(loc.getProperty("Password"))).clear();
-		driver.findElement(By.name(loc.getProperty("Password"))).sendKeys(pass);
-		Thread.sleep(4000);
-		driver.findElement(By.xpath(loc.getProperty("Login_Button"))).click();
+    public void Logintest(String name, String pass) {
 
-		boolean expectedSuccess = name.equals("Admin") && pass.equals("admin123");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
-		if (expectedSuccess) {
-			Assert.assertTrue(driver.getCurrentUrl().contains("/dashboard"),
-					"Expected success login, but dashboard not reached");
-		} else {
-			Assert.assertTrue(driver.findElement(By.cssSelector(".oxd-alert.oxd-alert--error")).isDisplayed(),
-					"Expected error for invalid login, but not shown");
-		}
+        // Always start from login page for each dataset
+        driver.get("https://opensource-demo.orangehrmlive.com/web/index.php/auth/login");
 
-	}
+        // Username
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.name(loc.getProperty("Username")))).clear();
+        driver.findElement(By.name(loc.getProperty("Username"))).sendKeys(name);
 
-	@DataProvider(name = "testdata")
-	public Object[][] tdata() {
-		return new Object[][] {
+        // Password
+        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.name(loc.getProperty("Password")))).clear();
+        driver.findElement(By.name(loc.getProperty("Password"))).sendKeys(pass);
 
-				{ "Admin", "admin12" }, { "Admi", "admin123" }, { "Admin", "admin123" } };
-	}
+        // Click login
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath(loc.getProperty("Login_Button")))).click();
+
+        // ✅ Only success is considered PASS
+        // If login is invalid, this will time out and test will FAIL
+        wait.until(ExpectedConditions.urlContains("/dashboard"));
+
+        Assert.assertTrue(driver.getCurrentUrl().contains("/dashboard"),
+                "Login failed - dashboard not reached for user=" + name);
+    }
+
+    @DataProvider(name = "testdata")
+    public Object[][] tdata() {
+        return new Object[][] {
+                { "Admin", "admin12" },   // will FAIL
+                { "Admi",  "admin123" },  // will FAIL
+                { "Admin", "admin123" }   // will PASS
+        };
+    }
 }
+

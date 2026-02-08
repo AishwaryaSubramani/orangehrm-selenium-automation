@@ -3,7 +3,11 @@
 <suite name="OrangeHRMDemo">
   <test thread-count="5" name="OrangeHRM">
     <classes>
-      <class name="testcase.Login"/>
+        <class name="testcase.Login"/>
+         <class name="testcase.AddEmployee"/>
+       <class name="testcase.Logout"/>
+
+     
     </classes>
   </test> <!-- Test -->
 </suite> <!-- Suite -->
